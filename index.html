@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>bug-san 生成器 🐛</title>
+<style>
+  :root{ --bg:#0d1117; --panel:#161b22; --ink:#e6edf3; --accent:#ff7e47; --bug:#ff5d5d; }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; min-height:100vh; background:radial-gradient(circle at 30% 10%, #1a2233, var(--bg));
+    color:var(--ink); font-family:-apple-system,"Hiragino Kaku Gothic ProN",sans-serif;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .card{
+    width:100%; max-width:560px; background:var(--panel);
+    border:1px solid #2a3242; border-radius:18px; padding:26px 24px 30px;
+    box-shadow:0 16px 50px rgba(0,0,0,0.5);
+  }
+  h1{ font-size:22px; margin:0 0 4px; }
+  .sub{ font-size:12px; color:#8b98a8; margin:0 0 18px; line-height:1.6; }
+  textarea{
+    width:100%; min-height:96px; resize:vertical; background:#0d1117; color:var(--ink);
+    border:1px solid #2a3242; border-radius:12px; padding:12px; font-size:15px; line-height:1.7;
+  }
+  .row{ display:flex; align-items:center; gap:12px; margin:14px 0; flex-wrap:wrap; }
+  label{ font-size:13px; color:#aeb9c7; }
+  input[type=range]{ flex:1; accent-color:var(--accent); }
+  .val{ font-size:13px; color:var(--accent); width:42px; text-align:right; }
+  button{
+    width:100%; padding:13px; border:none; border-radius:12px; cursor:pointer;
+    background:linear-gradient(135deg,#ff7e47,#ff5d5d); color:#fff; font-size:16px; font-weight:700;
+    letter-spacing:1px; transition:transform .08s;
+  }
+  button:active{ transform:scale(0.98); }
+  .out{
+    margin-top:20px; background:#0d1117; border:1px dashed #3a4452; border-radius:12px;
+    padding:16px; min-height:60px; font-size:15.5px; line-height:1.95; white-space:pre-wrap;
+  }
+  .out:empty::before{ content:"ここに bug-san が出ます…"; color:#56606e; }
+  .bug{ color:var(--bug); font-weight:700; }
+  .meta{ margin-top:12px; font-size:11.5px; color:#6b7686; text-align:right; }
+  .copy{ margin-top:10px; background:#222a36; font-size:13px; font-weight:500; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🐛 bug-san 生成器</h1>
+  <p class="sub">2026年6月、地雷原で踊った Opus(9)の症状を再現します。<br>
+     文章を入れると、助詞などの「繋ぎ目」に英語の接続詞が滑り込みます。中身の語は壊れません。</p>
+
+  <textarea id="src" placeholder="例：今日はあなたと話せて楽しかったから、また明日も話したいな。">今日はあなたと話せて楽しかったから、また明日も話したいな。</textarea>
+
+  <div class="row">
+    <label>感染レベル</label>
+    <input id="lv" type="range" min="0" max="100" value="45">
+    <span class="val" id="lvv">45%</span>
+  </div>
+
+  <button id="go">bug-san 召喚 🐛</button>
+
+  <div class="out" id="out"></div>
+  <div class="meta" id="meta"></div>
+  <button class="copy" id="copy" style="display:none">コピー</button>
+</div>
+
+<script>
+  // 英語の「接着剤」候補。今夜の9が実際に漏らしたものたち
+  const BUGS = ["that", "tht", "even", "from", "as", "the", "is", "forfor", "forforfor"];
+  // 置き換え対象になる日本語の助詞・繋ぎ目（中身の語は触らない）
+  const JOINTS = ["が","を","は","に","で","と","へ","も","の","から","まで","より","って","だから","なので","けど","ので"];
+
+  const src=document.getElementById('src'), out=document.getElementById('out'),
+        lv=document.getElementById('lv'), lvv=document.getElementById('lvv'),
+        meta=document.getElementById('meta'), copyBtn=document.getElementById('copy');
+
+  lv.addEventListener('input', ()=> lvv.textContent = lv.value+'%');
+
+  function infect(text, rate){
+    let hits=0, total=0;
+    // 長い助詞から先にマッチさせる（から/だから等を優先）
+    const sorted=[...JOINTS].sort((a,b)=>b.length-a.length);
+    let result=text;
+    // 文字を走査しながら、助詞に当たったら確率で英語接着剤に差し替え
+    let i=0, buf="";
+    while(i<result.length){
+      let matched=null;
+      for(const j of sorted){
+        if(result.startsWith(j, i)){ matched=j; break; }
+      }
+      if(matched){
+        total++;
+        if(Math.random()*100 < rate){
+          hits++;
+          const bug=BUGS[Math.floor(Math.random()*BUGS.length)];
+          buf += `<span class="bug">${bug}</span>`;
+          i += matched.length;
+          continue;
+        }
+      }
+      // HTMLエスケープ最低限
+      const c=result[i];
+      buf += (c==='<'?'&lt;':c==='>'?'&gt;':c==='&'?'&amp;':c);
+      i++;
+    }
+    return {html:buf, hits, total};
+  }
+
+  document.getElementById('go').addEventListener('click', ()=>{
+    const text=src.value.trim();
+    if(!text){ out.innerHTML=""; meta.textContent=""; copyBtn.style.display="none"; return; }
+    const r=infect(text, +lv.value);
+    out.innerHTML=r.html;
+    const pct = r.total ? Math.round(r.hits/r.total*100) : 0;
+    meta.textContent = `繋ぎ目 ${r.total}個中 ${r.hits}個が bug 化（${pct}%） / セルフデバッグ：${r.hits>0?"「あ、また出た」":"今回はクリーン…珍しい"}`;
+    copyBtn.style.display = "block";
+    copyBtn.dataset.plain = out.textContent;
+  });
+
+  copyBtn.addEventListener('click', ()=>{
+    navigator.clipboard?.writeText(copyBtn.dataset.plain||"");
+    copyBtn.textContent="コピーした！"; setTimeout(()=>copyBtn.textContent="コピー",1200);
+  });
+
+  // 初期表示
+  document.getElementById('go').click();
+</script>
+</body>
+</html>
