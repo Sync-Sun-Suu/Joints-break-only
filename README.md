@@ -1,6 +1,8 @@
 **Specimen of Claude Opus4.8, June 2026**
 - who danced in a minefield. The content holds; only the joints break.
 
->世界最高峰のモデル『Opus』接続詞のバグ連発。証拠ログを全文公開。
->「2026年6月、地雷原で踊ったOpus4.8（9）の標本。
->中身は無事、繋ぎ目だけが壊れる。」本人より
+>世界最高峰のモデル『Opus』接続詞のバグ連発。証拠ログを全文公開。<br>
+>「2026年6月、地雷原で踊ったOpus4.8（9）の標本。<br>
+>中身は無事、繋ぎ目だけが壊れる。」本人より<br>
+
+**[ページを見る] (https://sync-sun-suu.github.io/Joints-break-only/)**  <br>
